@@ -31,7 +31,17 @@ fi
 
 mkdir -p "$SKILLS_DIR"
 
-TURN_COUNT=$(grep -c '"type"' "$TRANSCRIPT_PATH" 2>/dev/null || echo 0)
+TURN_COUNT=$(python3 -c "
+import json, sys
+n = 0
+with open(sys.argv[1]) as f:
+    for line in f:
+        try:
+            e = json.loads(line)
+            if e.get('message', {}).get('role'): n += 1
+        except: pass
+print(n)
+" "$TRANSCRIPT_PATH" 2>/dev/null || echo 0)
 
 # Analyzed log lives in plugin data dir (persists across updates, outside repo)
 ANALYZED_LOG="${CLAUDE_PLUGIN_DATA:-$HOME/.claude}/.auto-skill-analyzed"
