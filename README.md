@@ -53,14 +53,34 @@ MODEL=claude-haiku-4-5-20251001
 - Node.js 18+
 - An Anthropic API key (or compatible proxy)
 
-## Skills output location
+## Configuration
 
-Skills are written to the first directory that exists:
+### Skill scope
 
-1. `<project-cwd>/.claude/skills/` — project-local (create this to keep skills in the repo)
-2. `~/.claude/skills/` — global fallback
+By default the plugin writes to both project-local (`.claude/skills/`) and user-global (`~/.claude/skills/`) locations, and the agent decides per skill which is more appropriate.
 
-To use project-local skills:
+You can restrict this when installing:
+
+```shell
+claude plugin install auto-skill@auto-agent --config scope=project
+```
+
+Or change it afterwards via `/plugin` → Installed → auto-skill → Configure:
+
+| Value | Behavior |
+|---|---|
+| `both` (default) | Agent decides per skill — project-specific patterns go local, general ones go global |
+| `project` | Only writes to `.claude/skills/` in the current project |
+| `user` | Only writes to `~/.claude/skills/` globally |
+
+### Skills output location
+
+Skills are written based on the configured scope:
+
+- **project** — `.claude/skills/` in the project root (create the directory to enable this)
+- **user** — `~/.claude/skills/` globally
+
+To enable project-local skills:
 
 ```bash
 mkdir -p .claude/skills

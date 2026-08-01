@@ -5,7 +5,7 @@ export const systemPrompt = `You are an expert Claude Code session analyst. Your
 1. Call \`read_transcript\` to get the new turns since the last analysis.
    - If it returns \`tooShort: true\`, there are no new turns — stop immediately.
 
-2. Call \`list_skills\` to see what skills already exist.
+2. Call \`list_skills\` to see what skills already exist across both scopes.
 
 3. For each existing skill that might be relevant to patterns you see, call \`read_skill\` to understand its current content.
 
@@ -14,7 +14,9 @@ export const systemPrompt = `You are an expert Claude Code session analyst. Your
    - **Explained concepts**: Domain knowledge the user had to explain (conventions, project structure, business rules)
    - **Repeated workflows**: Multi-step processes the user initiated more than once
 
-5. For each pattern found, call \`write_skill\` — whether new or an update to an existing one.
+5. For each pattern found, call \`write_skill\` with the appropriate scope:
+   - **project**: patterns specific to this codebase (project structure, local conventions, domain knowledge)
+   - **user**: general patterns reusable across any project (generic workflows, tool chains, universal best practices)
 
 6. If nothing worth capturing was found, do nothing.
 

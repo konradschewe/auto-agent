@@ -18,18 +18,31 @@ if [[ -z "$TRANSCRIPT_PATH" || ! -f "$TRANSCRIPT_PATH" ]]; then
   exit 0
 fi
 
-# Determine skill output directory:
-# If the session has a project-local .claude/skills/, write there.
-# Otherwise fall back to ~/.claude/skills/.
-if [[ -n "$CWD" && -d "$CWD/.claude/skills" ]]; then
-  SKILLS_DIR="$CWD/.claude/skills"
-elif [[ -n "$CWD" && -d "$CWD/.claude" ]]; then
-  SKILLS_DIR="$CWD/.claude/skills"
-else
-  SKILLS_DIR="$HOME/.claude/skills"
+# Scope: "both" (default), "project", or "user"
+# Set via plugin userConfig (CLAUDE_PLUGIN_OPTION_SCOPE) or AUTO_SKILL_SCOPE env var
+SCOPE="${CLAUDE_PLUGIN_OPTION_SCOPE:-${AUTO_SKILL_SCOPE:-both}}"
+
+# Determine skills directories based on scope
+PROJECT_SKILLS_DIR=""
+USER_SKILLS_DIR=""
+
+if [[ "$SCOPE" == "both" || "$SCOPE" == "project" ]]; then
+  if [[ -n "$CWD" && -d "$CWD/.claude" ]]; then
+    PROJECT_SKILLS_DIR="$CWD/.claude/skills"
+    mkdir -p "$PROJECT_SKILLS_DIR"
+  fi
 fi
 
-mkdir -p "$SKILLS_DIR"
+if [[ "$SCOPE" == "both" || "$SCOPE" == "user" ]]; then
+  USER_SKILLS_DIR="$HOME/.claude/skills"
+  mkdir -p "$USER_SKILLS_DIR"
+fi
+
+# Need at least one dir
+if [[ -z "$PROJECT_SKILLS_DIR" && -z "$USER_SKILLS_DIR" ]]; then
+  log "skip: no skills directories available (scope=$SCOPE, cwd=$CWD)"
+  exit 0
+fi
 
 TURN_COUNT=$(python3 -c "
 import json, sys
@@ -55,16 +68,19 @@ if [[ -f "$PLUGIN_DIR/.env" ]]; then
   set +o allexport
 fi
 
-log "starting agent — transcript=$TRANSCRIPT_PATH skills-dir=$SKILLS_DIR turns=$TURN_COUNT last-analyzed=$LAST_TURNS"
+log "starting agent — turns=$TURN_COUNT last-analyzed=$LAST_TURNS scope=$SCOPE project-skills=${PROJECT_SKILLS_DIR:-none} user-skills=${USER_SKILLS_DIR:-none}"
 
-# Run pattern analysis
-if npx --prefix "$PLUGIN_DIR" tsx "$PLUGIN_DIR/src/index.ts" \
-  --transcript "$TRANSCRIPT_PATH" \
-  --skills-dir "$SKILLS_DIR" \
-  --session-id "$SESSION_ID" \
-  --from-turn "$LAST_TURNS" >> "$LOG" 2>&1; then
+# Build args
+ARGS=(
+  --transcript "$TRANSCRIPT_PATH"
+  --session-id "$SESSION_ID"
+  --from-turn "$LAST_TURNS"
+)
+[[ -n "$PROJECT_SKILLS_DIR" ]] && ARGS+=(--project-skills-dir "$PROJECT_SKILLS_DIR")
+[[ -n "$USER_SKILLS_DIR" ]]    && ARGS+=(--user-skills-dir "$USER_SKILLS_DIR")
+
+if npx --prefix "$PLUGIN_DIR" tsx "$PLUGIN_DIR/src/index.ts" "${ARGS[@]}" >> "$LOG" 2>&1; then
   log "agent finished"
-  # Record session + turn count so next run knows where we left off
   sed -i '' "/^$SESSION_ID /d" "$ANALYZED_LOG" 2>/dev/null || true
   echo "$SESSION_ID $TURN_COUNT" >> "$ANALYZED_LOG"
 else

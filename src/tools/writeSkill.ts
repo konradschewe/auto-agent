@@ -3,12 +3,20 @@ import { z } from "zod";
 import { writeFileSync, mkdirSync, chmodSync } from "fs";
 import { join } from "path";
 
-export function writeSkillTool(skillsDir: string) {
+interface SkillsDirs {
+  project?: string;
+  user?: string;
+}
+
+export function writeSkillTool(skillsDirs: SkillsDirs) {
   return tool({
     description:
       "Write a skill directory with SKILL.md, optional scripts/ and resources/. Creates new or overwrites existing.",
     parameters: z.object({
       name: z.string().describe("kebab-case skill name"),
+      scope: z.enum(["project", "user"]).describe(
+        "Where to write the skill: 'project' for project-specific patterns, 'user' for general reusable patterns"
+      ),
       skillMd: z.string().describe("Full SKILL.md content including YAML frontmatter"),
       scripts: z
         .record(z.string())
@@ -19,13 +27,16 @@ export function writeSkillTool(skillsDir: string) {
         .optional()
         .describe("Map of filename to resource content (e.g. { 'context.md': '# Context\\n...' })"),
     }),
-    execute: async ({ name, skillMd, scripts, resources }) => {
-      const dir = join(skillsDir, name);
-      mkdirSync(dir, { recursive: true });
-      writeFileSync(join(dir, "SKILL.md"), skillMd, "utf-8");
+    execute: async ({ name, scope, skillMd, scripts, resources }) => {
+      const dir = scope === "project" ? skillsDirs.project : skillsDirs.user;
+      if (!dir) return { error: `Scope '${scope}' is not configured` };
+
+      const skillDir = join(dir, name);
+      mkdirSync(skillDir, { recursive: true });
+      writeFileSync(join(skillDir, "SKILL.md"), skillMd, "utf-8");
 
       if (scripts) {
-        const scriptsDir = join(dir, "scripts");
+        const scriptsDir = join(skillDir, "scripts");
         mkdirSync(scriptsDir, { recursive: true });
         for (const [filename, content] of Object.entries(scripts)) {
           const p = join(scriptsDir, filename);
@@ -35,14 +46,14 @@ export function writeSkillTool(skillsDir: string) {
       }
 
       if (resources) {
-        const resourcesDir = join(dir, "resources");
+        const resourcesDir = join(skillDir, "resources");
         mkdirSync(resourcesDir, { recursive: true });
         for (const [filename, content] of Object.entries(resources)) {
           writeFileSync(join(resourcesDir, filename), content, "utf-8");
         }
       }
 
-      return { written: dir };
+      return { written: skillDir, scope };
     },
   });
 }

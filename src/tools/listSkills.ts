@@ -2,16 +2,26 @@ import { tool } from "ai";
 import { z } from "zod";
 import { readdirSync, existsSync } from "fs";
 
-export function listSkillsTool(skillsDir: string) {
+interface SkillsDirs {
+  project?: string;
+  user?: string;
+}
+
+export function listSkillsTool(skillsDirs: SkillsDirs) {
   return tool({
-    description: "List all currently active skills.",
+    description: "List all currently active skills, showing their scope (project or user).",
     parameters: z.object({}),
     execute: async () => {
-      if (!existsSync(skillsDir)) return { skills: [] };
-      const entries = readdirSync(skillsDir, { withFileTypes: true });
-      const skills = entries
-        .filter((e: import("fs").Dirent) => e.isDirectory() && !e.name.startsWith("."))
-        .map((e: import("fs").Dirent) => e.name);
+      const skills: Array<{ name: string; scope: "project" | "user" }> = [];
+      for (const [scope, dir] of [["project", skillsDirs.project], ["user", skillsDirs.user]] as const) {
+        if (!dir || !existsSync(dir)) continue;
+        const entries = readdirSync(dir, { withFileTypes: true });
+        for (const e of entries) {
+          if (e.isDirectory() && !e.name.startsWith(".")) {
+            skills.push({ name: e.name, scope });
+          }
+        }
+      }
       return { skills };
     },
   });
