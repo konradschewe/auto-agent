@@ -56,6 +56,15 @@ with open(sys.argv[1]) as f:
 print(n)
 " "$TRANSCRIPT_PATH" 2>/dev/null || echo 0)
 
+# Prevent duplicate runs when plugin is installed at multiple scopes.
+# mkdir is atomic — only one instance wins, the other skips.
+LOCK_DIR="${CLAUDE_PLUGIN_DATA:-$HOME/.claude}/.auto-skill-lock-${SESSION_ID}-${TURN_COUNT}"
+if ! mkdir "$LOCK_DIR" 2>/dev/null; then
+  log "skip: another instance already running for this session/turn"
+  exit 0
+fi
+trap 'rmdir "$LOCK_DIR"' EXIT
+
 # Analyzed log lives in plugin data dir (persists across updates, outside repo)
 ANALYZED_LOG="${CLAUDE_PLUGIN_DATA:-$HOME/.claude}/.auto-skill-analyzed"
 touch "$ANALYZED_LOG"
