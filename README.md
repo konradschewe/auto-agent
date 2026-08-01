@@ -23,7 +23,7 @@ Detected patterns are written as skills into `.claude/skills/` (project-local) o
 ### 2. Install the plugin
 
 ```shell
-/plugin install auto-skill@konradschewe
+/plugin install auto-skill@auto-agent
 ```
 
 Choose your scope when prompted:
