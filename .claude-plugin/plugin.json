@@ -1,0 +1,8 @@
+{
+  "name": "auto-skill",
+  "version": "0.1.0",
+  "description": "Self-learning skill system — observes sessions and automatically generates reusable skills",
+  "author": {
+    "name": "konradschewe"
+  }
+}

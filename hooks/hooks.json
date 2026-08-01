@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "hooks/stop.sh",
+            "timeout": 60,
+            "statusMessage": "auto-agent: analyzing session..."
+          }
+        ]
+      }
+    ]
+  }
+}

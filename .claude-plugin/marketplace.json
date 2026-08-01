@@ -1,0 +1,22 @@
+{
+  "name": "konradschewe",
+  "owner": {
+    "name": "konradschewe",
+    "url": "https://github.com/konradschewe"
+  },
+  "description": "Claude Code plugins by konradschewe",
+  "plugins": [
+    {
+      "name": "auto-skill",
+      "source": ".",
+      "description": "Observes Claude Code sessions and automatically generates reusable skills from detected patterns",
+      "author": {
+        "name": "konradschewe"
+      },
+      "homepage": "https://github.com/konradschewe/auto-agent",
+      "repository": "https://github.com/konradschewe/auto-agent",
+      "license": "MIT",
+      "keywords": ["skills", "automation", "self-learning", "hooks"]
+    }
+  ]
+}

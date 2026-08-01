@@ -1,0 +1,20 @@
+{
+  "name": "auto-agent",
+  "version": "0.1.0",
+  "description": "Self-learning skill system for Claude Code",
+  "type": "module",
+  "scripts": {
+    "analyze": "tsx hooks/analyze.ts"
+  },
+  "dependencies": {
+    "@ai-sdk/anthropic": "^1.2.12",
+    "ai": "^4.3.16",
+    "dotenv": "^17.4.2",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
