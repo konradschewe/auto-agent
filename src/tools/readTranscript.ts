@@ -2,9 +2,9 @@ import { tool } from "ai";
 import { z } from "zod";
 import { readFileSync } from "fs";
 
-export function readTranscriptTool(transcriptPath: string) {
+export function readTranscriptTool(transcriptPath: string, fromTurn = 0) {
   return tool({
-    description: "Read and summarize the session transcript. Returns a compact summary of all turns.",
+    description: "Read and summarize the session transcript. Returns all turns with new turns marked [NEW].",
     parameters: z.object({}),
     execute: async () => {
       const raw = readFileSync(transcriptPath, "utf-8");
@@ -13,22 +13,32 @@ export function readTranscriptTool(transcriptPath: string) {
         const trimmed = line.trim();
         if (!trimmed) continue;
         try {
-          turns.push(JSON.parse(trimmed));
+          const entry = JSON.parse(trimmed);
+          // Transcript format: { type: "user"|"assistant", message: { role, content } }
+          if (entry.message?.role && entry.message?.content !== undefined) {
+            turns.push({ role: entry.message.role, content: entry.message.content });
+          }
         } catch {}
       }
 
-      if (turns.length < 10) {
-        return { tooShort: true, turnCount: turns.length };
+      if (turns.length === 0) {
+        return { tooShort: true, turnCount: 0 };
+      }
+
+      const newTurnCount = Math.max(0, turns.length - fromTurn);
+      if (newTurnCount === 0) {
+        return { tooShort: true, turnCount: turns.length, newTurnCount: 0 };
       }
 
       const lines: string[] = [];
       for (let i = 0; i < Math.min(turns.length, 100); i++) {
         const turn = turns[i];
-        const role = turn.role ?? "unknown";
+        const prefix = i >= fromTurn ? "[NEW]" : "";
+        const role = turn.role;
         const content = turn.content;
 
         if (typeof content === "string") {
-          lines.push(`[${role}] ${content.slice(0, 300)}`);
+          lines.push(`${prefix}[${role}] ${content.slice(0, 300)}`);
         } else if (Array.isArray(content)) {
           const parts: string[] = [];
           for (const block of content) {
@@ -48,7 +58,7 @@ export function readTranscriptTool(transcriptPath: string) {
               parts.push(`[result] ${text.slice(0, 150)}`);
             }
           }
-          lines.push(`[${role}] ${parts.join(" | ")}`);
+          lines.push(`${prefix}[${role}] ${parts.join(" | ")}`);
         }
 
         if (i === 99 && turns.length > 100) {
@@ -56,7 +66,7 @@ export function readTranscriptTool(transcriptPath: string) {
         }
       }
 
-      return { turnCount: turns.length, summary: lines.join("\n") };
+      return { turnCount: turns.length, newTurnCount, fromTurn, summary: lines.join("\n") };
     },
   });
 }

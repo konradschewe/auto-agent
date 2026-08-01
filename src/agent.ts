@@ -10,9 +10,10 @@ interface RunOptions {
   transcriptPath: string;
   skillsDir: string;
   sessionId: string;
+  fromTurn?: number;
 }
 
-export async function runAgent({ transcriptPath, skillsDir }: RunOptions) {
+export async function runAgent({ transcriptPath, skillsDir, fromTurn = 0 }: RunOptions) {
   const anthropic = createAnthropic({
     apiKey: process.env.ANTHROPIC_API_KEY,
     baseURL: process.env.ANTHROPIC_BASE_URL,
@@ -25,7 +26,7 @@ export async function runAgent({ transcriptPath, skillsDir }: RunOptions) {
     system: systemPrompt,
     prompt: "Analyze the current session and create or update skills as appropriate.",
     tools: {
-      read_transcript: readTranscriptTool(transcriptPath),
+      read_transcript: readTranscriptTool(transcriptPath, fromTurn),
       list_skills: listSkillsTool(skillsDir),
       read_skill: readSkillTool(skillsDir),
       write_skill: writeSkillTool(skillsDir),

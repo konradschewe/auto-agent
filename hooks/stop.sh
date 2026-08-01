@@ -31,15 +31,12 @@ fi
 
 mkdir -p "$SKILLS_DIR"
 
-TURN_COUNT=$(grep -c '"role"' "$TRANSCRIPT_PATH" 2>/dev/null || echo 0)
+TURN_COUNT=$(grep -c '"type"' "$TRANSCRIPT_PATH" 2>/dev/null || echo 0)
 
-# Deduplicate: skip if this transcript was already analyzed
-ANALYZED_LOG="$PLUGIN_DIR/.analyzed"
+# Analyzed log lives in plugin data dir (persists across updates, outside repo)
+ANALYZED_LOG="${CLAUDE_PLUGIN_DATA:-$HOME/.claude}/.auto-skill-analyzed"
 touch "$ANALYZED_LOG"
-if grep -qF "$SESSION_ID" "$ANALYZED_LOG" 2>/dev/null; then
-  log "skip: already analyzed"
-  exit 0
-fi
+LAST_TURNS=$(grep "^$SESSION_ID " "$ANALYZED_LOG" 2>/dev/null | awk '{print $2}' | tail -1 || echo "0")
 
 # Load credentials from plugin-dir .env if present (local development only)
 if [[ -f "$PLUGIN_DIR/.env" ]]; then
@@ -48,15 +45,18 @@ if [[ -f "$PLUGIN_DIR/.env" ]]; then
   set +o allexport
 fi
 
-log "starting agent — transcript=$TRANSCRIPT_PATH skills-dir=$SKILLS_DIR turns=$TURN_COUNT"
+log "starting agent — transcript=$TRANSCRIPT_PATH skills-dir=$SKILLS_DIR turns=$TURN_COUNT last-analyzed=$LAST_TURNS"
 
 # Run pattern analysis
 if npx --prefix "$PLUGIN_DIR" tsx "$PLUGIN_DIR/src/index.ts" \
   --transcript "$TRANSCRIPT_PATH" \
   --skills-dir "$SKILLS_DIR" \
-  --session-id "$SESSION_ID" >> "$LOG" 2>&1; then
+  --session-id "$SESSION_ID" \
+  --from-turn "$LAST_TURNS" >> "$LOG" 2>&1; then
   log "agent finished"
-  echo "$SESSION_ID" >> "$ANALYZED_LOG"
+  # Record session + turn count so next run knows where we left off
+  sed -i '' "/^$SESSION_ID /d" "$ANALYZED_LOG" 2>/dev/null || true
+  echo "$SESSION_ID $TURN_COUNT" >> "$ANALYZED_LOG"
 else
   log "agent failed (exit $?)"
 fi
