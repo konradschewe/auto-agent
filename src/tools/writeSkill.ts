@@ -2,11 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { writeFileSync, mkdirSync, chmodSync } from "fs";
 import { join } from "path";
-
-interface SkillsDirs {
-  project?: string;
-  user?: string;
-}
+import type { SkillsDirs } from "../types.js";
 
 export function writeSkillTool(skillsDirs: SkillsDirs) {
   return tool({

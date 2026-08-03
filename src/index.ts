@@ -1,6 +1,7 @@
 #!/usr/bin/env tsx
 import { parseArgs } from "util";
 import { runAgent } from "./agent.js";
+import { formatSummary } from "./format-summary.js";
 
 const { values: args } = parseArgs({
   args: process.argv.slice(2),
@@ -32,19 +33,5 @@ const { text, stepCount, writtenSkills } = await runAgent({ transcriptPath, skil
 
 process.stdout.write(`auto-agent: analysis complete (${stepCount} steps)\n`);
 
-const parts: string[] = [];
-if (writtenSkills.length > 0) {
-  const skillsList = writtenSkills.map(({ name, scope }) => `${name} (${scope})`).join(", ");
-  parts.push(`wrote skills: ${skillsList}`);
-}
-
-// Only use agent text if it looks like a short summary (≤120 chars, no newlines)
-const summary = text?.trim() ?? "";
-if (summary && summary.length <= 120 && !summary.includes("\n")) {
-  parts.push(summary);
-} else if (writtenSkills.length === 0) {
-  parts.push("no new patterns found");
-}
-
-const reason = parts.join(" — ");
+const reason = formatSummary(writtenSkills, text);
 if (reason) process.stdout.write(`AGENT_REASON:${reason}\n`);

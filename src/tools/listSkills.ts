@@ -1,11 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { readdirSync, existsSync } from "fs";
-
-interface SkillsDirs {
-  project?: string;
-  user?: string;
-}
+import type { SkillsDirs } from "../types.js";
 
 export function listSkillsTool(skillsDirs: SkillsDirs) {
   return tool({

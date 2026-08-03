@@ -5,18 +5,7 @@ import { listSkillsTool } from "./tools/listSkills.js";
 import { readSkillTool } from "./tools/readSkill.js";
 import { writeSkillTool } from "./tools/writeSkill.js";
 import { systemPrompt } from "./prompt.js";
-
-interface SkillsDirs {
-  project?: string;
-  user?: string;
-}
-
-interface RunOptions {
-  transcriptPath: string;
-  skillsDirs: SkillsDirs;
-  sessionId: string;
-  fromTurn?: number;
-}
+import type { RunOptions } from "./types.js";
 
 export async function runAgent({ transcriptPath, skillsDirs, fromTurn = 0 }: RunOptions) {
   const rawBaseURL = process.env.ANTHROPIC_BASE_URL?.replace(/\/$/, "");
