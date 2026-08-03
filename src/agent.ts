@@ -19,9 +19,11 @@ interface RunOptions {
 }
 
 export async function runAgent({ transcriptPath, skillsDirs, fromTurn = 0 }: RunOptions) {
+  const rawBaseURL = process.env.ANTHROPIC_BASE_URL?.replace(/\/$/, "");
+  const baseURL = rawBaseURL ? `${rawBaseURL}/v1` : undefined;
   const anthropic = createAnthropic({
-    apiKey: process.env.ANTHROPIC_API_KEY,
-    baseURL: process.env.ANTHROPIC_BASE_URL,
+    apiKey: process.env.ANTHROPIC_API_KEY ?? process.env.ANTHROPIC_AUTH_TOKEN,
+    baseURL,
   });
 
   const model = process.env.MODEL || "claude-haiku-4-5-20251001";

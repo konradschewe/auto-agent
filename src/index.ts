@@ -1,5 +1,4 @@
 #!/usr/bin/env tsx
-import "dotenv/config";
 import { parseArgs } from "util";
 import { runAgent } from "./agent.js";
 

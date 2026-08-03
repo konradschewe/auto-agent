@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/stop.sh",
+            "command": "npx --prefix ${CLAUDE_PLUGIN_ROOT} tsx ${CLAUDE_PLUGIN_ROOT}/src/hook.ts",
             "timeout": 60,
             "statusMessage": "auto-agent: analyzing session..."
           }

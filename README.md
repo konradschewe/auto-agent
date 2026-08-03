@@ -37,21 +37,23 @@ Choose your scope when prompted:
 /reload-plugins
 ```
 
-### 4. Set your API key
-
-The plugin reads `ANTHROPIC_API_KEY` from the environment. If it's already set in your shell (which it is if you're using Claude Code), nothing else is needed.
-
-To use a custom proxy or a different model, set these in your shell profile:
-
-```env
-ANTHROPIC_BASE_URL=https://your-proxy.example.com
-MODEL=claude-haiku-4-5-20251001
-```
-
 ## Requirements
 
 - Node.js 18+
 - An Anthropic API key (or compatible proxy)
+
+The plugin reads credentials from the environment. If `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` is already set in your shell or in `~/.claude/settings.json` (which is the case if you're using Claude Code), nothing extra is needed.
+
+To use a custom proxy, set `ANTHROPIC_BASE_URL` in your shell or in `~/.claude/settings.json`:
+
+```json
+"env": {
+  "ANTHROPIC_BASE_URL": "https://your-proxy.example.com/anthropic",
+  "MODEL": "claude-haiku-4-5-20251001"
+}
+```
+
+The plugin appends `/v1` to `ANTHROPIC_BASE_URL` internally, so the URL should not include it — consistent with how Claude Code itself uses the variable.
 
 ## Configuration
 
@@ -73,19 +75,6 @@ Or change it afterwards via `/plugin` → Installed → auto-skill → Configure
 | `project` | Only writes to `.claude/skills/` in the current project |
 | `user` | Only writes to `~/.claude/skills/` globally |
 
-### Skills output location
-
-Skills are written based on the configured scope:
-
-- **project** — `.claude/skills/` in the project root (create the directory to enable this)
-- **user** — `~/.claude/skills/` globally
-
-To enable project-local skills:
-
-```bash
-mkdir -p .claude/skills
-```
-
 ## Debugging
 
 The hook logs everything to `~/.claude/auto-agent.log`. Watch it in real time:
@@ -104,8 +93,7 @@ Log entries include why a session was skipped (already analyzed, transcript not 
 └── marketplace.json     # Marketplace catalog (this repo is its own marketplace)
 
 hooks/
-├── hooks.json           # Registers the Stop hook (auto-loaded by Claude Code)
-└── stop.sh              # Reads session JSON from stdin, invokes the agent
+└── hooks.json           # Registers the Stop hook (auto-loaded by Claude Code)
 
 src/
 ├── tools/
@@ -115,7 +103,8 @@ src/
 │   └── writeSkill.ts      # Writes skill dir with SKILL.md
 ├── prompt.ts              # System prompt for the analysis agent
 ├── agent.ts               # Vercel AI SDK generateText loop (max 20 steps)
-└── index.ts               # CLI entry point
+├── hook.ts                # Stop hook entry point (reads stdin, manages lock/state, runs agent)
+└── index.ts               # CLI entry point (for local development)
 ```
 
-The agent reads the session transcript, compares against existing skills, then creates or updates skills as appropriate.
+The hook reads session JSON from stdin (provided by Claude Code), acquires a per-session lock to prevent duplicate runs, then invokes the agent. The agent reads the session transcript, compares against existing skills, and creates or updates skills as appropriate.
