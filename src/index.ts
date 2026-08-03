@@ -29,9 +29,9 @@ if (!transcriptPath || !sessionId || (!skillsDirs.project && !skillsDirs.user)) 
   process.exit(1);
 }
 
-const { text, stepCount, writtenSkills } = await runAgent({ transcriptPath, skillsDirs, sessionId, fromTurn });
+const { text, stepCount, writtenSkills, deletedSkills } = await runAgent({ transcriptPath, skillsDirs, sessionId, fromTurn });
 
 process.stdout.write(`auto-agent: analysis complete (${stepCount} steps)\n`);
 
-const reason = formatSummary(writtenSkills, text);
+const reason = formatSummary(writtenSkills, deletedSkills, text);
 if (reason) process.stdout.write(`AGENT_REASON:${reason}\n`);

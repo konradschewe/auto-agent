@@ -47,7 +47,7 @@ log(
 );
 
 try {
-  const { text, writtenSkills } = await runAgent({
+  const { text, writtenSkills, deletedSkills } = await runAgent({
     transcriptPath,
     skillsDirs,
     sessionId,
@@ -57,7 +57,7 @@ try {
   log("agent finished");
   markAnalyzed(analyzedLog, sessionId, turnCount);
 
-  const reason = formatSummary(writtenSkills, text);
+  const reason = formatSummary(writtenSkills, deletedSkills, text);
   if (reason) {
     process.stdout.write(JSON.stringify({ systemMessage: `auto-agent: ${reason}` }) + "\n");
   }
