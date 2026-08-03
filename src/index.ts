@@ -29,7 +29,23 @@ if (!transcriptPath || !sessionId || (!skillsDirs.project && !skillsDirs.user)) 
   process.exit(1);
 }
 
-const { text, stepCount } = await runAgent({ transcriptPath, skillsDirs, sessionId, fromTurn });
+const { text, stepCount, writtenSkills } = await runAgent({ transcriptPath, skillsDirs, sessionId, fromTurn });
 
 process.stdout.write(`auto-agent: analysis complete (${stepCount} steps)\n`);
-if (text) process.stdout.write(text + "\n");
+
+const parts: string[] = [];
+if (writtenSkills.length > 0) {
+  const skillsList = writtenSkills.map(({ name, scope }) => `${name} (${scope})`).join(", ");
+  parts.push(`wrote skills: ${skillsList}`);
+}
+
+// Only use agent text if it looks like a short summary (≤120 chars, no newlines)
+const summary = text?.trim() ?? "";
+if (summary && summary.length <= 120 && !summary.includes("\n")) {
+  parts.push(summary);
+} else if (writtenSkills.length === 0) {
+  parts.push("no new patterns found");
+}
+
+const reason = parts.join(" — ");
+if (reason) process.stdout.write(`AGENT_REASON:${reason}\n`);

@@ -18,7 +18,7 @@ export const systemPrompt = `You are an expert Claude Code session analyst. Your
    - **project**: patterns specific to this codebase (project structure, local conventions, domain knowledge)
    - **user**: general patterns reusable across any project (generic workflows, tool chains, universal best practices)
 
-6. If nothing worth capturing was found, do nothing.
+6. After finishing, output a single short sentence (max 12 words, no markdown) summarizing what you did or why nothing was written.
 
 ## Guidelines
 

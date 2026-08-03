@@ -88,10 +88,20 @@ ARGS=(
 [[ -n "$PROJECT_SKILLS_DIR" ]] && ARGS+=(--project-skills-dir "$PROJECT_SKILLS_DIR")
 [[ -n "$USER_SKILLS_DIR" ]]    && ARGS+=(--user-skills-dir "$USER_SKILLS_DIR")
 
-if npx --prefix "$PLUGIN_DIR" tsx "$PLUGIN_DIR/src/index.ts" "${ARGS[@]}" >> "$LOG" 2>&1; then
+AGENT_OUTPUT=$(npx --prefix "$PLUGIN_DIR" tsx "$PLUGIN_DIR/src/index.ts" "${ARGS[@]}" 2>>"$LOG")
+AGENT_EXIT=$?
+echo "$AGENT_OUTPUT" >> "$LOG"
+
+if [[ $AGENT_EXIT -eq 0 ]]; then
   log "agent finished"
   sed -i '' "/^$SESSION_ID /d" "$ANALYZED_LOG" 2>/dev/null || true
   echo "$SESSION_ID $TURN_COUNT" >> "$ANALYZED_LOG"
+
+  REASON_LINE=$(echo "$AGENT_OUTPUT" | grep '^AGENT_REASON:' | tail -1 || true)
+  if [[ -n "$REASON_LINE" ]]; then
+    REASON="${REASON_LINE#AGENT_REASON:}"
+    python3 -c "import json,sys; print(json.dumps({'decision':'block','reason':'auto-agent: '+sys.argv[1]}))" "$REASON"
+  fi
 else
-  log "agent failed (exit $?)"
+  log "agent failed (exit $AGENT_EXIT)"
 fi

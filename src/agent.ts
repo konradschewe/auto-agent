@@ -26,6 +26,20 @@ export async function runAgent({ transcriptPath, skillsDirs, fromTurn = 0 }: Run
 
   const model = process.env.MODEL || "claude-haiku-4-5-20251001";
 
+  const writtenSkills: Array<{ name: string; scope: string }> = [];
+  const baseWriteSkill = writeSkillTool(skillsDirs);
+
+  const trackedWriteSkill = {
+    ...baseWriteSkill,
+    execute: async (...args: Parameters<typeof baseWriteSkill.execute>) => {
+      const result = await baseWriteSkill.execute(...args);
+      if (!("error" in result)) {
+        writtenSkills.push({ name: args[0].name, scope: args[0].scope });
+      }
+      return result;
+    },
+  };
+
   const { text, steps } = await generateText({
     model: anthropic(model),
     system: systemPrompt,
@@ -34,10 +48,10 @@ export async function runAgent({ transcriptPath, skillsDirs, fromTurn = 0 }: Run
       read_transcript: readTranscriptTool(transcriptPath, fromTurn),
       list_skills: listSkillsTool(skillsDirs),
       read_skill: readSkillTool(skillsDirs),
-      write_skill: writeSkillTool(skillsDirs),
+      write_skill: trackedWriteSkill,
     },
     maxSteps: 20,
   });
 
-  return { text, stepCount: steps.length };
+  return { text, stepCount: steps.length, writtenSkills };
 }
