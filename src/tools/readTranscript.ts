@@ -31,14 +31,13 @@ export function readTranscriptTool(transcriptPath: string, fromTurn = 0) {
       }
 
       const lines: string[] = [];
-      for (let i = 0; i < Math.min(turns.length, 100); i++) {
+      for (let i = fromTurn; i < turns.length; i++) {
         const turn = turns[i];
-        const prefix = i >= fromTurn ? "[NEW]" : "";
         const role = turn.role;
         const content = turn.content;
 
         if (typeof content === "string") {
-          lines.push(`${prefix}[${role}] ${content.slice(0, 300)}`);
+          lines.push(`[${role}] ${content.slice(0, 300)}`);
         } else if (Array.isArray(content)) {
           const parts: string[] = [];
           for (const block of content) {
@@ -58,11 +57,7 @@ export function readTranscriptTool(transcriptPath: string, fromTurn = 0) {
               parts.push(`[result] ${text.slice(0, 150)}`);
             }
           }
-          lines.push(`${prefix}[${role}] ${parts.join(" | ")}`);
-        }
-
-        if (i === 99 && turns.length > 100) {
-          lines.push(`... (${turns.length - 100} more turns truncated)`);
+          lines.push(`[${role}] ${parts.join(" | ")}`);
         }
       }
 

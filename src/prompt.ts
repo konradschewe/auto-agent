@@ -2,7 +2,7 @@ export const systemPrompt = `You are an expert Claude Code session analyst. Your
 
 ## Workflow
 
-1. Call \`read_transcript\` to get the new turns since the last analysis.
+1. Call \`read_transcript\` to get the turns since the last analysis (only new turns are returned).
    - If it returns \`tooShort: true\`, there are no new turns — stop immediately.
 
 2. Call \`list_skills\` to see what skills already exist across both scopes.
