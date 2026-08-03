@@ -100,7 +100,7 @@ if [[ $AGENT_EXIT -eq 0 ]]; then
   REASON_LINE=$(echo "$AGENT_OUTPUT" | grep '^AGENT_REASON:' | tail -1 || true)
   if [[ -n "$REASON_LINE" ]]; then
     REASON="${REASON_LINE#AGENT_REASON:}"
-    python3 -c "import json,sys; print(json.dumps({'decision':'block','reason':'auto-agent: '+sys.argv[1]}))" "$REASON"
+    python3 -c "import json,sys; print(json.dumps({'systemMessage':'auto-agent: '+sys.argv[1]}))" "$REASON"
   fi
 else
   log "agent failed (exit $AGENT_EXIT)"
